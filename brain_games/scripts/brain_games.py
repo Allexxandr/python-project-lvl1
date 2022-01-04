@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
-from brain_games.cli import get_user_name
+from brain_games.cli import cli
 
 def main():
-    get_user_name()
+    cli()
 
+if __name__ == '__main__':
+    main()
