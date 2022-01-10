@@ -8,12 +8,10 @@ NUMBER_OF_ROUNDS = 3
 
 
 def generate_number():
-   
     return randint(1, 100)
 
 
 def check_answer(user_answer, correct_answer):
-    
     if user_answer == correct_answer:
         message = 'Correct!'
         return (True, message)
@@ -22,7 +20,6 @@ def check_answer(user_answer, correct_answer):
 
 
 def welcome_user():
-   
     user_name = get_user_name()
     greeting = f'Hello, {user_name}!'
     print(greeting)
@@ -30,7 +27,6 @@ def welcome_user():
 
 
 def run(game=None):
-    
     print('Welcome to the Brain Games!')
     if game:
         print(game.DESCRIPTION)
@@ -42,7 +38,6 @@ def run(game=None):
 
 
 def engine(user_name, play):
-   
     correct_answers = 0
     while correct_answers < NUMBER_OF_ROUNDS:
         question, correct_answer = play()

@@ -6,7 +6,6 @@ DESCRIPTION = 'What number is missing in the progression?'
 
 
 def make_progression():
-    
     initial_number = randint(1, 100)
     delta = randint(1, 25)
     length = 10
@@ -15,10 +14,9 @@ def make_progression():
 
 
 def make_question():
-    
     prog = make_progression()
     secret = choice(prog)
-    progression = ' '.join([     
+    progression = ' '.join([
         '..' if num == secret else str(num) for num in prog
     ])
     question = f'Question: {progression}'

@@ -14,17 +14,14 @@ operations = {
 
 
 def generate_operation():
-    
     return choice(list(operations.keys()))
 
 
 def correct_answer(num1, operation, num2):
-   
     return str(operations[operation](num1, num2))
 
 
 def make_question():
-
     num1 = generate_number()
     num2 = generate_number()
     operation = generate_operation()

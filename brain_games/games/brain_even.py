@@ -4,7 +4,6 @@ DESCRIPTION = 'Answer "yes" if number even otherwise answer "no".'
 
 
 def make_question():
-    
     number = generate_number()
     question = f'Question: {number}'
     answer = correct_answer(number)
@@ -12,5 +11,4 @@ def make_question():
 
 
 def correct_answer(number):
-    
     return 'no' if number % 2 else 'yes'
