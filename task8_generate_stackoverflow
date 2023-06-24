@@ -1,0 +1,1353 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "cmPxS2aIOh2v"
+      },
+      "source": [
+        "# Генерация кода по вопросам со StackOverflow\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "id": "9lkzttNqOh2y",
+        "outputId": "66b892ff-7eb2-4ce9-b5df-5191bf15f25c",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Cloning into 'stepik-dl-nlp'...\n",
+            "remote: Enumerating objects: 293, done.\u001b[K\n",
+            "remote: Total 293 (delta 0), reused 0 (delta 0), pack-reused 293\u001b[K\n",
+            "Receiving objects: 100% (293/293), 42.29 MiB | 25.76 MiB/s, done.\n",
+            "Resolving deltas: 100% (134/134), done.\n",
+            "Looking in indexes: https://pypi.org/simple, https://us-python.pkg.dev/colab-wheels/public/simple/\n",
+            "Requirement already satisfied: scikit-learn in /usr/local/lib/python3.10/dist-packages (from -r stepik-dl-nlp/requirements.txt (line 1)) (1.2.2)\n",
+            "Collecting spacy-udpipe (from -r stepik-dl-nlp/requirements.txt (line 2))\n",
+            "  Downloading spacy_udpipe-1.0.0-py3-none-any.whl (11 kB)\n",
+            "Collecting pymorphy2 (from -r stepik-dl-nlp/requirements.txt (line 3))\n",
+            "  Downloading pymorphy2-0.9.1-py3-none-any.whl (55 kB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m55.5/55.5 kB\u001b[0m \u001b[31m2.5 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hRequirement already satisfied: torch>=1.2 in /usr/local/lib/python3.10/dist-packages (from -r stepik-dl-nlp/requirements.txt (line 4)) (2.0.1+cu118)\n",
+            "Requirement already satisfied: matplotlib in /usr/local/lib/python3.10/dist-packages (from -r stepik-dl-nlp/requirements.txt (line 5)) (3.7.1)\n",
+            "Collecting ipymarkup (from -r stepik-dl-nlp/requirements.txt (line 6))\n",
+            "  Downloading ipymarkup-0.9.0-py3-none-any.whl (14 kB)\n",
+            "Requirement already satisfied: lxml in /usr/local/lib/python3.10/dist-packages (from -r stepik-dl-nlp/requirements.txt (line 7)) (4.9.2)\n",
+            "Requirement already satisfied: scipy in /usr/local/lib/python3.10/dist-packages (from -r stepik-dl-nlp/requirements.txt (line 8)) (1.10.1)\n",
+            "Requirement already satisfied: pandas in /usr/local/lib/python3.10/dist-packages (from -r stepik-dl-nlp/requirements.txt (line 9)) (1.5.3)\n",
+            "Requirement already satisfied: tqdm in /usr/local/lib/python3.10/dist-packages (from -r stepik-dl-nlp/requirements.txt (line 10)) (4.65.0)\n",
+            "Collecting youtokentome (from -r stepik-dl-nlp/requirements.txt (line 11))\n",
+            "  Downloading youtokentome-1.0.6.tar.gz (86 kB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m86.7/86.7 kB\u001b[0m \u001b[31m7.5 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25h  Preparing metadata (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "Requirement already satisfied: seaborn in /usr/local/lib/python3.10/dist-packages (from -r stepik-dl-nlp/requirements.txt (line 12)) (0.12.2)\n",
+            "Requirement already satisfied: ipykernel in /usr/local/lib/python3.10/dist-packages (from -r stepik-dl-nlp/requirements.txt (line 13)) (5.5.6)\n",
+            "Requirement already satisfied: ipython in /usr/local/lib/python3.10/dist-packages (from -r stepik-dl-nlp/requirements.txt (line 14)) (7.34.0)\n",
+            "Collecting pyconll (from -r stepik-dl-nlp/requirements.txt (line 15))\n",
+            "  Downloading pyconll-3.2.0-py3-none-any.whl (27 kB)\n",
+            "Collecting gensim==3.8.1 (from -r stepik-dl-nlp/requirements.txt (line 16))\n",
+            "  Downloading gensim-3.8.1.tar.gz (23.4 MB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m23.4/23.4 MB\u001b[0m \u001b[31m16.9 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25h  Preparing metadata (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "Collecting wget (from -r stepik-dl-nlp/requirements.txt (line 17))\n",
+            "  Downloading wget-3.2.zip (10 kB)\n",
+            "  Preparing metadata (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "Collecting livelossplot==0.5.3 (from -r stepik-dl-nlp/requirements.txt (line 18))\n",
+            "  Downloading livelossplot-0.5.3-py3-none-any.whl (30 kB)\n",
+            "Requirement already satisfied: numpy>=1.11.3 in /usr/local/lib/python3.10/dist-packages (from gensim==3.8.1->-r stepik-dl-nlp/requirements.txt (line 16)) (1.22.4)\n",
+            "Requirement already satisfied: six>=1.5.0 in /usr/local/lib/python3.10/dist-packages (from gensim==3.8.1->-r stepik-dl-nlp/requirements.txt (line 16)) (1.16.0)\n",
+            "Requirement already satisfied: smart_open>=1.8.1 in /usr/local/lib/python3.10/dist-packages (from gensim==3.8.1->-r stepik-dl-nlp/requirements.txt (line 16)) (6.3.0)\n",
+            "Requirement already satisfied: bokeh in /usr/local/lib/python3.10/dist-packages (from livelossplot==0.5.3->-r stepik-dl-nlp/requirements.txt (line 18)) (2.4.3)\n",
+            "Requirement already satisfied: joblib>=1.1.1 in /usr/local/lib/python3.10/dist-packages (from scikit-learn->-r stepik-dl-nlp/requirements.txt (line 1)) (1.2.0)\n",
+            "Requirement already satisfied: threadpoolctl>=2.0.0 in /usr/local/lib/python3.10/dist-packages (from scikit-learn->-r stepik-dl-nlp/requirements.txt (line 1)) (3.1.0)\n",
+            "Requirement already satisfied: spacy<4.0.0,>=3.0.0 in /usr/local/lib/python3.10/dist-packages (from spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (3.5.3)\n",
+            "Collecting ufal.udpipe>=1.2.0 (from spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2))\n",
+            "  Downloading ufal.udpipe-1.3.0.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (936 kB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m937.0/937.0 kB\u001b[0m \u001b[31m57.5 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hCollecting dawg-python>=0.7.1 (from pymorphy2->-r stepik-dl-nlp/requirements.txt (line 3))\n",
+            "  Downloading DAWG_Python-0.7.2-py2.py3-none-any.whl (11 kB)\n",
+            "Collecting pymorphy2-dicts-ru<3.0,>=2.4 (from pymorphy2->-r stepik-dl-nlp/requirements.txt (line 3))\n",
+            "  Downloading pymorphy2_dicts_ru-2.4.417127.4579844-py2.py3-none-any.whl (8.2 MB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m8.2/8.2 MB\u001b[0m \u001b[31m100.5 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hCollecting docopt>=0.6 (from pymorphy2->-r stepik-dl-nlp/requirements.txt (line 3))\n",
+            "  Downloading docopt-0.6.2.tar.gz (25 kB)\n",
+            "  Preparing metadata (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "Requirement already satisfied: filelock in /usr/local/lib/python3.10/dist-packages (from torch>=1.2->-r stepik-dl-nlp/requirements.txt (line 4)) (3.12.2)\n",
+            "Requirement already satisfied: typing-extensions in /usr/local/lib/python3.10/dist-packages (from torch>=1.2->-r stepik-dl-nlp/requirements.txt (line 4)) (4.6.3)\n",
+            "Requirement already satisfied: sympy in /usr/local/lib/python3.10/dist-packages (from torch>=1.2->-r stepik-dl-nlp/requirements.txt (line 4)) (1.11.1)\n",
+            "Requirement already satisfied: networkx in /usr/local/lib/python3.10/dist-packages (from torch>=1.2->-r stepik-dl-nlp/requirements.txt (line 4)) (3.1)\n",
+            "Requirement already satisfied: jinja2 in /usr/local/lib/python3.10/dist-packages (from torch>=1.2->-r stepik-dl-nlp/requirements.txt (line 4)) (3.1.2)\n",
+            "Requirement already satisfied: triton==2.0.0 in /usr/local/lib/python3.10/dist-packages (from torch>=1.2->-r stepik-dl-nlp/requirements.txt (line 4)) (2.0.0)\n",
+            "Requirement already satisfied: cmake in /usr/local/lib/python3.10/dist-packages (from triton==2.0.0->torch>=1.2->-r stepik-dl-nlp/requirements.txt (line 4)) (3.25.2)\n",
+            "Requirement already satisfied: lit in /usr/local/lib/python3.10/dist-packages (from triton==2.0.0->torch>=1.2->-r stepik-dl-nlp/requirements.txt (line 4)) (16.0.6)\n",
+            "Requirement already satisfied: contourpy>=1.0.1 in /usr/local/lib/python3.10/dist-packages (from matplotlib->-r stepik-dl-nlp/requirements.txt (line 5)) (1.1.0)\n",
+            "Requirement already satisfied: cycler>=0.10 in /usr/local/lib/python3.10/dist-packages (from matplotlib->-r stepik-dl-nlp/requirements.txt (line 5)) (0.11.0)\n",
+            "Requirement already satisfied: fonttools>=4.22.0 in /usr/local/lib/python3.10/dist-packages (from matplotlib->-r stepik-dl-nlp/requirements.txt (line 5)) (4.40.0)\n",
+            "Requirement already satisfied: kiwisolver>=1.0.1 in /usr/local/lib/python3.10/dist-packages (from matplotlib->-r stepik-dl-nlp/requirements.txt (line 5)) (1.4.4)\n",
+            "Requirement already satisfied: packaging>=20.0 in /usr/local/lib/python3.10/dist-packages (from matplotlib->-r stepik-dl-nlp/requirements.txt (line 5)) (23.1)\n",
+            "Requirement already satisfied: pillow>=6.2.0 in /usr/local/lib/python3.10/dist-packages (from matplotlib->-r stepik-dl-nlp/requirements.txt (line 5)) (8.4.0)\n",
+            "Requirement already satisfied: pyparsing>=2.3.1 in /usr/local/lib/python3.10/dist-packages (from matplotlib->-r stepik-dl-nlp/requirements.txt (line 5)) (3.1.0)\n",
+            "Requirement already satisfied: python-dateutil>=2.7 in /usr/local/lib/python3.10/dist-packages (from matplotlib->-r stepik-dl-nlp/requirements.txt (line 5)) (2.8.2)\n",
+            "Collecting intervaltree>=3 (from ipymarkup->-r stepik-dl-nlp/requirements.txt (line 6))\n",
+            "  Downloading intervaltree-3.1.0.tar.gz (32 kB)\n",
+            "  Preparing metadata (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "Requirement already satisfied: pytz>=2020.1 in /usr/local/lib/python3.10/dist-packages (from pandas->-r stepik-dl-nlp/requirements.txt (line 9)) (2022.7.1)\n",
+            "Requirement already satisfied: Click>=7.0 in /usr/local/lib/python3.10/dist-packages (from youtokentome->-r stepik-dl-nlp/requirements.txt (line 11)) (8.1.3)\n",
+            "Requirement already satisfied: ipython-genutils in /usr/local/lib/python3.10/dist-packages (from ipykernel->-r stepik-dl-nlp/requirements.txt (line 13)) (0.2.0)\n",
+            "Requirement already satisfied: traitlets>=4.1.0 in /usr/local/lib/python3.10/dist-packages (from ipykernel->-r stepik-dl-nlp/requirements.txt (line 13)) (5.7.1)\n",
+            "Requirement already satisfied: jupyter-client in /usr/local/lib/python3.10/dist-packages (from ipykernel->-r stepik-dl-nlp/requirements.txt (line 13)) (6.1.12)\n",
+            "Requirement already satisfied: tornado>=4.2 in /usr/local/lib/python3.10/dist-packages (from ipykernel->-r stepik-dl-nlp/requirements.txt (line 13)) (6.3.1)\n",
+            "Requirement already satisfied: setuptools>=18.5 in /usr/local/lib/python3.10/dist-packages (from ipython->-r stepik-dl-nlp/requirements.txt (line 14)) (67.7.2)\n",
+            "Collecting jedi>=0.16 (from ipython->-r stepik-dl-nlp/requirements.txt (line 14))\n",
+            "  Downloading jedi-0.18.2-py2.py3-none-any.whl (1.6 MB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m1.6/1.6 MB\u001b[0m \u001b[31m33.5 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hRequirement already satisfied: decorator in /usr/local/lib/python3.10/dist-packages (from ipython->-r stepik-dl-nlp/requirements.txt (line 14)) (4.4.2)\n",
+            "Requirement already satisfied: pickleshare in /usr/local/lib/python3.10/dist-packages (from ipython->-r stepik-dl-nlp/requirements.txt (line 14)) (0.7.5)\n",
+            "Requirement already satisfied: prompt-toolkit!=3.0.0,!=3.0.1,<3.1.0,>=2.0.0 in /usr/local/lib/python3.10/dist-packages (from ipython->-r stepik-dl-nlp/requirements.txt (line 14)) (3.0.38)\n",
+            "Requirement already satisfied: pygments in /usr/local/lib/python3.10/dist-packages (from ipython->-r stepik-dl-nlp/requirements.txt (line 14)) (2.14.0)\n",
+            "Requirement already satisfied: backcall in /usr/local/lib/python3.10/dist-packages (from ipython->-r stepik-dl-nlp/requirements.txt (line 14)) (0.2.0)\n",
+            "Requirement already satisfied: matplotlib-inline in /usr/local/lib/python3.10/dist-packages (from ipython->-r stepik-dl-nlp/requirements.txt (line 14)) (0.1.6)\n",
+            "Requirement already satisfied: pexpect>4.3 in /usr/local/lib/python3.10/dist-packages (from ipython->-r stepik-dl-nlp/requirements.txt (line 14)) (4.8.0)\n",
+            "Requirement already satisfied: sortedcontainers<3.0,>=2.0 in /usr/local/lib/python3.10/dist-packages (from intervaltree>=3->ipymarkup->-r stepik-dl-nlp/requirements.txt (line 6)) (2.4.0)\n",
+            "Requirement already satisfied: parso<0.9.0,>=0.8.0 in /usr/local/lib/python3.10/dist-packages (from jedi>=0.16->ipython->-r stepik-dl-nlp/requirements.txt (line 14)) (0.8.3)\n",
+            "Requirement already satisfied: ptyprocess>=0.5 in /usr/local/lib/python3.10/dist-packages (from pexpect>4.3->ipython->-r stepik-dl-nlp/requirements.txt (line 14)) (0.7.0)\n",
+            "Requirement already satisfied: wcwidth in /usr/local/lib/python3.10/dist-packages (from prompt-toolkit!=3.0.0,!=3.0.1,<3.1.0,>=2.0.0->ipython->-r stepik-dl-nlp/requirements.txt (line 14)) (0.2.6)\n",
+            "Requirement already satisfied: spacy-legacy<3.1.0,>=3.0.11 in /usr/local/lib/python3.10/dist-packages (from spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (3.0.12)\n",
+            "Requirement already satisfied: spacy-loggers<2.0.0,>=1.0.0 in /usr/local/lib/python3.10/dist-packages (from spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (1.0.4)\n",
+            "Requirement already satisfied: murmurhash<1.1.0,>=0.28.0 in /usr/local/lib/python3.10/dist-packages (from spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (1.0.9)\n",
+            "Requirement already satisfied: cymem<2.1.0,>=2.0.2 in /usr/local/lib/python3.10/dist-packages (from spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (2.0.7)\n",
+            "Requirement already satisfied: preshed<3.1.0,>=3.0.2 in /usr/local/lib/python3.10/dist-packages (from spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (3.0.8)\n",
+            "Requirement already satisfied: thinc<8.2.0,>=8.1.8 in /usr/local/lib/python3.10/dist-packages (from spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (8.1.10)\n",
+            "Requirement already satisfied: wasabi<1.2.0,>=0.9.1 in /usr/local/lib/python3.10/dist-packages (from spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (1.1.2)\n",
+            "Requirement already satisfied: srsly<3.0.0,>=2.4.3 in /usr/local/lib/python3.10/dist-packages (from spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (2.4.6)\n",
+            "Requirement already satisfied: catalogue<2.1.0,>=2.0.6 in /usr/local/lib/python3.10/dist-packages (from spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (2.0.8)\n",
+            "Requirement already satisfied: typer<0.8.0,>=0.3.0 in /usr/local/lib/python3.10/dist-packages (from spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (0.7.0)\n",
+            "Requirement already satisfied: pathy>=0.10.0 in /usr/local/lib/python3.10/dist-packages (from spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (0.10.2)\n",
+            "Requirement already satisfied: requests<3.0.0,>=2.13.0 in /usr/local/lib/python3.10/dist-packages (from spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (2.27.1)\n",
+            "Requirement already satisfied: pydantic!=1.8,!=1.8.1,<1.11.0,>=1.7.4 in /usr/local/lib/python3.10/dist-packages (from spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (1.10.9)\n",
+            "Requirement already satisfied: langcodes<4.0.0,>=3.2.0 in /usr/local/lib/python3.10/dist-packages (from spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (3.3.0)\n",
+            "Requirement already satisfied: PyYAML>=3.10 in /usr/local/lib/python3.10/dist-packages (from bokeh->livelossplot==0.5.3->-r stepik-dl-nlp/requirements.txt (line 18)) (6.0)\n",
+            "Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.10/dist-packages (from jinja2->torch>=1.2->-r stepik-dl-nlp/requirements.txt (line 4)) (2.1.3)\n",
+            "Requirement already satisfied: jupyter-core>=4.6.0 in /usr/local/lib/python3.10/dist-packages (from jupyter-client->ipykernel->-r stepik-dl-nlp/requirements.txt (line 13)) (5.3.1)\n",
+            "Requirement already satisfied: pyzmq>=13 in /usr/local/lib/python3.10/dist-packages (from jupyter-client->ipykernel->-r stepik-dl-nlp/requirements.txt (line 13)) (23.2.1)\n",
+            "Requirement already satisfied: mpmath>=0.19 in /usr/local/lib/python3.10/dist-packages (from sympy->torch>=1.2->-r stepik-dl-nlp/requirements.txt (line 4)) (1.3.0)\n",
+            "Requirement already satisfied: platformdirs>=2.5 in /usr/local/lib/python3.10/dist-packages (from jupyter-core>=4.6.0->jupyter-client->ipykernel->-r stepik-dl-nlp/requirements.txt (line 13)) (3.7.0)\n",
+            "Requirement already satisfied: urllib3<1.27,>=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests<3.0.0,>=2.13.0->spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (1.26.16)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.10/dist-packages (from requests<3.0.0,>=2.13.0->spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (2023.5.7)\n",
+            "Requirement already satisfied: charset-normalizer~=2.0.0 in /usr/local/lib/python3.10/dist-packages (from requests<3.0.0,>=2.13.0->spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (2.0.12)\n",
+            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.10/dist-packages (from requests<3.0.0,>=2.13.0->spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (3.4)\n",
+            "Requirement already satisfied: blis<0.8.0,>=0.7.8 in /usr/local/lib/python3.10/dist-packages (from thinc<8.2.0,>=8.1.8->spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (0.7.9)\n",
+            "Requirement already satisfied: confection<1.0.0,>=0.0.1 in /usr/local/lib/python3.10/dist-packages (from thinc<8.2.0,>=8.1.8->spacy<4.0.0,>=3.0.0->spacy-udpipe->-r stepik-dl-nlp/requirements.txt (line 2)) (0.0.4)\n",
+            "Building wheels for collected packages: gensim, youtokentome, wget, docopt, intervaltree\n",
+            "  Building wheel for gensim (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "  Created wheel for gensim: filename=gensim-3.8.1-cp310-cp310-linux_x86_64.whl size=24956724 sha256=9919ff12cf0f949b533292f131f8c9036265830c28fdd9cdc936759651b7d62e\n",
+            "  Stored in directory: /root/.cache/pip/wheels/92/23/5d/b5ce54b3760acfebee170a8fe4d91cb303fafbefd8f93f3723\n",
+            "  Building wheel for youtokentome (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "  Created wheel for youtokentome: filename=youtokentome-1.0.6-cp310-cp310-linux_x86_64.whl size=1927596 sha256=cda5b1de916397b1a93da02b37220861eac958b20000a61d3f21d030c1fcd42d\n",
+            "  Stored in directory: /root/.cache/pip/wheels/df/85/f8/301d2ba45f43f30bed2fe413efa760bc726b8b660ed9c2900c\n",
+            "  Building wheel for wget (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "  Created wheel for wget: filename=wget-3.2-py3-none-any.whl size=9657 sha256=65df7c5ffb570e1db7fa933d154e419ad5c861603fdfe28d809ff2e289fde522\n",
+            "  Stored in directory: /root/.cache/pip/wheels/8b/f1/7f/5c94f0a7a505ca1c81cd1d9208ae2064675d97582078e6c769\n",
+            "  Building wheel for docopt (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "  Created wheel for docopt: filename=docopt-0.6.2-py2.py3-none-any.whl size=13707 sha256=92d966d9bd6ca9a1a500220c5cd4666329e20493ea1b62ca70954b796e055b9f\n",
+            "  Stored in directory: /root/.cache/pip/wheels/fc/ab/d4/5da2067ac95b36618c629a5f93f809425700506f72c9732fac\n",
+            "  Building wheel for intervaltree (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "  Created wheel for intervaltree: filename=intervaltree-3.1.0-py2.py3-none-any.whl size=26099 sha256=717ea6ac0dfe0bc618b01f155b92be6e4f5be1bba0026d4755d1f61530fa0732\n",
+            "  Stored in directory: /root/.cache/pip/wheels/fa/80/8c/43488a924a046b733b64de3fac99252674c892a4c3801c0a61\n",
+            "Successfully built gensim youtokentome wget docopt intervaltree\n",
+            "Installing collected packages: wget, ufal.udpipe, pymorphy2-dicts-ru, docopt, dawg-python, youtokentome, pymorphy2, pyconll, jedi, intervaltree, ipymarkup, gensim, livelossplot, spacy-udpipe\n",
+            "  Attempting uninstall: gensim\n",
+            "    Found existing installation: gensim 4.3.1\n",
+            "    Uninstalling gensim-4.3.1:\n",
+            "      Successfully uninstalled gensim-4.3.1\n",
+            "Successfully installed dawg-python-0.7.2 docopt-0.6.2 gensim-3.8.1 intervaltree-3.1.0 ipymarkup-0.9.0 jedi-0.18.2 livelossplot-0.5.3 pyconll-3.2.0 pymorphy2-0.9.1 pymorphy2-dicts-ru-2.4.417127.4579844 spacy-udpipe-1.0.0 ufal.udpipe-1.3.0.1 wget-3.2 youtokentome-1.0.6\n"
+          ]
+        }
+      ],
+      "source": [
+        "# Если Вы запускаете ноутбук на colab или kaggle,\n",
+        "# выполните следующие строчки, чтобы подгрузить библиотеку dlnlputils:\n",
+        "\n",
+        "!git clone https://github.com/Samsung-IT-Academy/stepik-dl-nlp.git && pip install -r stepik-dl-nlp/requirements.txt\n",
+        "import sys; sys.path.append('./stepik-dl-nlp')"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install torchtext==0.6.0"
+      ],
+      "metadata": {
+        "id": "SsuJi128OoaG",
+        "outputId": "7a967f49-5ffb-49c3-c6eb-567c51ab9b81",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "execution_count": 23,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Looking in indexes: https://pypi.org/simple, https://us-python.pkg.dev/colab-wheels/public/simple/\n",
+            "Requirement already satisfied: torchtext==0.6.0 in /usr/local/lib/python3.10/dist-packages (0.6.0)\n",
+            "Requirement already satisfied: tqdm in /usr/local/lib/python3.10/dist-packages (from torchtext==0.6.0) (4.65.0)\n",
+            "Requirement already satisfied: requests in /usr/local/lib/python3.10/dist-packages (from torchtext==0.6.0) (2.27.1)\n",
+            "Requirement already satisfied: torch in /usr/local/lib/python3.10/dist-packages (from torchtext==0.6.0) (2.0.1+cu118)\n",
+            "Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages (from torchtext==0.6.0) (1.22.4)\n",
+            "Requirement already satisfied: six in /usr/local/lib/python3.10/dist-packages (from torchtext==0.6.0) (1.16.0)\n",
+            "Requirement already satisfied: sentencepiece in /usr/local/lib/python3.10/dist-packages (from torchtext==0.6.0) (0.1.99)\n",
+            "Requirement already satisfied: urllib3<1.27,>=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests->torchtext==0.6.0) (1.26.16)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.10/dist-packages (from requests->torchtext==0.6.0) (2023.5.7)\n",
+            "Requirement already satisfied: charset-normalizer~=2.0.0 in /usr/local/lib/python3.10/dist-packages (from requests->torchtext==0.6.0) (2.0.12)\n",
+            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.10/dist-packages (from requests->torchtext==0.6.0) (3.4)\n",
+            "Requirement already satisfied: filelock in /usr/local/lib/python3.10/dist-packages (from torch->torchtext==0.6.0) (3.12.2)\n",
+            "Requirement already satisfied: typing-extensions in /usr/local/lib/python3.10/dist-packages (from torch->torchtext==0.6.0) (4.6.3)\n",
+            "Requirement already satisfied: sympy in /usr/local/lib/python3.10/dist-packages (from torch->torchtext==0.6.0) (1.11.1)\n",
+            "Requirement already satisfied: networkx in /usr/local/lib/python3.10/dist-packages (from torch->torchtext==0.6.0) (3.1)\n",
+            "Requirement already satisfied: jinja2 in /usr/local/lib/python3.10/dist-packages (from torch->torchtext==0.6.0) (3.1.2)\n",
+            "Requirement already satisfied: triton==2.0.0 in /usr/local/lib/python3.10/dist-packages (from torch->torchtext==0.6.0) (2.0.0)\n",
+            "Requirement already satisfied: cmake in /usr/local/lib/python3.10/dist-packages (from triton==2.0.0->torch->torchtext==0.6.0) (3.25.2)\n",
+            "Requirement already satisfied: lit in /usr/local/lib/python3.10/dist-packages (from triton==2.0.0->torch->torchtext==0.6.0) (16.0.6)\n",
+            "Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.10/dist-packages (from jinja2->torch->torchtext==0.6.0) (2.1.3)\n",
+            "Requirement already satisfied: mpmath>=0.19 in /usr/local/lib/python3.10/dist-packages (from sympy->torch->torchtext==0.6.0) (1.3.0)\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install torch"
+      ],
+      "metadata": {
+        "id": "9ZQT1ZziQpIV",
+        "outputId": "85ce91e3-2cc9-4491-94fb-bebb96787c22",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "execution_count": 24,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Looking in indexes: https://pypi.org/simple, https://us-python.pkg.dev/colab-wheels/public/simple/\n",
+            "Requirement already satisfied: torch in /usr/local/lib/python3.10/dist-packages (2.0.1+cu118)\n",
+            "Requirement already satisfied: filelock in /usr/local/lib/python3.10/dist-packages (from torch) (3.12.2)\n",
+            "Requirement already satisfied: typing-extensions in /usr/local/lib/python3.10/dist-packages (from torch) (4.6.3)\n",
+            "Requirement already satisfied: sympy in /usr/local/lib/python3.10/dist-packages (from torch) (1.11.1)\n",
+            "Requirement already satisfied: networkx in /usr/local/lib/python3.10/dist-packages (from torch) (3.1)\n",
+            "Requirement already satisfied: jinja2 in /usr/local/lib/python3.10/dist-packages (from torch) (3.1.2)\n",
+            "Requirement already satisfied: triton==2.0.0 in /usr/local/lib/python3.10/dist-packages (from torch) (2.0.0)\n",
+            "Requirement already satisfied: cmake in /usr/local/lib/python3.10/dist-packages (from triton==2.0.0->torch) (3.25.2)\n",
+            "Requirement already satisfied: lit in /usr/local/lib/python3.10/dist-packages (from triton==2.0.0->torch) (16.0.6)\n",
+            "Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.10/dist-packages (from jinja2->torch) (2.1.3)\n",
+            "Requirement already satisfied: mpmath>=0.19 in /usr/local/lib/python3.10/dist-packages (from sympy->torch) (1.3.0)\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 25,
+      "metadata": {
+        "id": "GxhfeviFOh2z"
+      },
+      "outputs": [],
+      "source": [
+        "import torch\n",
+        "import torch.nn as nn\n",
+        "import torch.optim as optim\n",
+        "import torch.nn.functional as F\n",
+        "\n",
+        "from torchtext.datasets import TranslationDataset, Multi30k\n",
+        "from torchtext.data import Field, BucketIterator\n",
+        "\n",
+        "import matplotlib.pyplot as plt\n",
+        "import matplotlib.ticker as ticker\n",
+        "\n",
+        "import spacy\n",
+        "\n",
+        "import random\n",
+        "import math\n",
+        "import time"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 26,
+      "metadata": {
+        "id": "DYZi2DQrOh2z"
+      },
+      "outputs": [],
+      "source": [
+        "SEED = 1234\n",
+        "\n",
+        "random.seed(SEED)\n",
+        "torch.manual_seed(SEED)\n",
+        "torch.backends.cudnn.deterministic = True"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 27,
+      "metadata": {
+        "id": "SCgHBPYSOh2z"
+      },
+      "outputs": [],
+      "source": [
+        "import re\n",
+        "\n",
+        "def tokenize_question(text):\n",
+        "    \"\"\"\n",
+        "    Tokenizes question from a string into a list of strings (tokens) and reverses it\n",
+        "    \"\"\"\n",
+        "    return list(filter(lambda x: len(x) < 16, re.findall(r\"[\\w']+\", text)[::-1]))\n",
+        "\n",
+        "def tokenize_snippet(text):\n",
+        "    \"\"\"\n",
+        "    Tokenizes code snippet into a list of operands\n",
+        "    \"\"\"\n",
+        "    return list(filter(lambda x: len(x) < 4, re.findall(r\"[\\w']+|[.,!?;:@~(){}\\[\\]+-/=\\\\\\'\\\"\\`]\", text)))"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 28,
+      "metadata": {
+        "id": "oulGE53iOh20"
+      },
+      "outputs": [],
+      "source": [
+        "import torch\n",
+        "from torchtext import data, datasets\n",
+        "\n",
+        "SRC = data.Field(\n",
+        "    tokenize = tokenize_question,\n",
+        "    init_token = '<sos>',\n",
+        "    eos_token = '<eos>',\n",
+        "    lower = True,\n",
+        "    include_lengths = True\n",
+        ")\n",
+        "\n",
+        "TRG = data.Field(\n",
+        "    tokenize = tokenize_snippet,\n",
+        "    init_token = '<sos>',\n",
+        "    eos_token = '<eos>',\n",
+        "    lower = True\n",
+        ")\n",
+        "\n",
+        "fields = {\n",
+        "    'intent': ('src', SRC),\n",
+        "    'snippet': ('trg', TRG)\n",
+        "}\n",
+        "\n",
+        "# Если Вы запускаете ноутбук на colab или kaggle, добавьте в начало пути ./stepik-dl-nlp\n",
+        "train_data, valid_data, test_data = data.TabularDataset.splits(\n",
+        "                            path = './stepik-dl-nlp/datasets/stackoverflow_code_generation/homework_data/',\n",
+        "                            train = 'train.csv',\n",
+        "                            validation = 'valid.csv',\n",
+        "                            test = 'test.csv',\n",
+        "                            format = 'csv',\n",
+        "                            fields = fields\n",
+        ")"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 29,
+      "metadata": {
+        "id": "hBIeDQUFOh20",
+        "outputId": "978f4f15-c6bc-4cab-8eb6-3925db64fdeb",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "[('python', 21408), ('a', 19702), ('in', 18987), ('to', 18056), ('how', 10797), ('of', 10755), ('the', 7026), ('with', 6426), ('list', 6119), ('and', 5786), ('from', 5566), ('using', 3993), ('for', 3738), ('i', 3365), ('file', 3246), ('pandas', 2976), ('string', 2889), ('is', 2781), ('on', 2650), ('function', 2436)]\n",
+            "[('.', 268445), (',', 263542), ('(', 222985), (')', 222807), ('=', 153002), (':', 138226), ('\"', 103886), ('[', 92184), (']', 92091), ('-', 87090), ('0', 59377), ('1', 51177), ('/', 49621), ('in', 32793), (\"'\", 28374), ('2', 26821), ('\\\\', 25522), ('for', 23030), ('{', 21918), ('}', 21891)]\n",
+            "Уникальные токены в словаре интентов: 6355\n",
+            "Уникальные токены в словаре сниппетов: 3702\n"
+          ]
+        }
+      ],
+      "source": [
+        "SRC.build_vocab([train_data.src], max_size=25000, min_freq=3)\n",
+        "print(SRC.vocab.freqs.most_common(20))\n",
+        "\n",
+        "\n",
+        "TRG.build_vocab([train_data.trg], min_freq=5)\n",
+        "print(TRG.vocab.freqs.most_common(20))\n",
+        "\n",
+        "print(f\"Уникальные токены в словаре интентов: {len(SRC.vocab)}\")\n",
+        "print(f\"Уникальные токены в словаре сниппетов: {len(TRG.vocab)}\")"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 30,
+      "metadata": {
+        "id": "1mg6QznpOh21",
+        "outputId": "6c46bb64-20a4-4a44-de1e-3e23894d023d",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Размер обучающей выборки: 50000\n",
+            "Размер валидационной выборки: 3500\n",
+            "Размер тестовой выборки: 3535\n"
+          ]
+        }
+      ],
+      "source": [
+        "print(f\"Размер обучающей выборки: {len(train_data.examples)}\")\n",
+        "print(f\"Размер валидационной выборки: {len(valid_data.examples)}\")\n",
+        "print(f\"Размер тестовой выборки: {len(test_data.examples)}\")"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install cuda-python"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "szcG5hLlx2JI",
+        "outputId": "54b63cc3-e2f6-41f5-ef76-873dbddac978"
+      },
+      "execution_count": 31,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Looking in indexes: https://pypi.org/simple, https://us-python.pkg.dev/colab-wheels/public/simple/\n",
+            "Requirement already satisfied: cuda-python in /usr/local/lib/python3.10/dist-packages (12.1.0)\n",
+            "Requirement already satisfied: cython in /usr/local/lib/python3.10/dist-packages (from cuda-python) (0.29.35)\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "pip install nvidia-cudnn-cu11"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "eQH9E1npziYX",
+        "outputId": "aa4c41bf-3d71-4e4e-a35b-71504e5f0298"
+      },
+      "execution_count": 21,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Looking in indexes: https://pypi.org/simple, https://us-python.pkg.dev/colab-wheels/public/simple/\n",
+            "Collecting nvidia-cudnn-cu11\n",
+            "  Downloading nvidia_cudnn_cu11-8.9.2.26-py3-none-manylinux1_x86_64.whl (732.3 MB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m732.3/732.3 MB\u001b[0m \u001b[31m1.3 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hCollecting nvidia-cublas-cu11 (from nvidia-cudnn-cu11)\n",
+            "  Downloading nvidia_cublas_cu11-11.11.3.6-py3-none-manylinux1_x86_64.whl (417.9 MB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m417.9/417.9 MB\u001b[0m \u001b[31m3.6 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hInstalling collected packages: nvidia-cublas-cu11, nvidia-cudnn-cu11\n",
+            "Successfully installed nvidia-cublas-cu11-11.11.3.6 nvidia-cudnn-cu11-8.9.2.26\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 32,
+      "metadata": {
+        "id": "xwcj1HFVOh21",
+        "outputId": "a09f7555-9449-4eb4-aee2-1ca2979866fc",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 328
+        }
+      },
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "RuntimeError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mRuntimeError\u001b[0m                              Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-32-d8bc684d6df0>\u001b[0m in \u001b[0;36m<cell line: 2>\u001b[0;34m()\u001b[0m\n\u001b[1;32m      1\u001b[0m \u001b[0mdevice\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mtorch\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mdevice\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m'cuda'\u001b[0m \u001b[0;32mif\u001b[0m \u001b[0mtorch\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcuda\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mis_available\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m \u001b[0;32melse\u001b[0m \u001b[0;34m'cpu'\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m----> 2\u001b[0;31m \u001b[0mtorch\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mcuda\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mset_device\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;36m0\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m",
+            "\u001b[0;32m/usr/local/lib/python3.10/dist-packages/torch/cuda/__init__.py\u001b[0m in \u001b[0;36mset_device\u001b[0;34m(device)\u001b[0m\n\u001b[1;32m    348\u001b[0m     \u001b[0mdevice\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0m_get_device_index\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mdevice\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    349\u001b[0m     \u001b[0;32mif\u001b[0m \u001b[0mdevice\u001b[0m \u001b[0;34m>=\u001b[0m \u001b[0;36m0\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 350\u001b[0;31m         \u001b[0mtorch\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_C\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_cuda_setDevice\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mdevice\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    351\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    352\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/local/lib/python3.10/dist-packages/torch/cuda/__init__.py\u001b[0m in \u001b[0;36m_lazy_init\u001b[0;34m()\u001b[0m\n\u001b[1;32m    245\u001b[0m         \u001b[0;32mif\u001b[0m \u001b[0;34m'CUDA_MODULE_LOADING'\u001b[0m \u001b[0;32mnot\u001b[0m \u001b[0;32min\u001b[0m \u001b[0mos\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0menviron\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    246\u001b[0m             \u001b[0mos\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0menviron\u001b[0m\u001b[0;34m[\u001b[0m\u001b[0;34m'CUDA_MODULE_LOADING'\u001b[0m\u001b[0;34m]\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0;34m'LAZY'\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 247\u001b[0;31m         \u001b[0mtorch\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_C\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0m_cuda_init\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    248\u001b[0m         \u001b[0;31m# Some of the queued calls may reentrantly call _lazy_init();\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    249\u001b[0m         \u001b[0;31m# we need to just return without initializing in that case.\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mRuntimeError\u001b[0m: Found no NVIDIA driver on your system. Please check that you have an NVIDIA GPU and installed a driver from http://www.nvidia.com/Download/index.aspx"
+          ]
+        }
+      ],
+      "source": [
+        "device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')\n",
+        "torch.cuda.set_device(0)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 54,
+      "metadata": {
+        "id": "Bx0OI_7GOh21",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "db3c84d2-a31c-4f22-c04d-51deb2ce9474"
+      },
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "device(type='cpu')"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 54
+        }
+      ],
+      "source": [
+        "device"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 39,
+      "metadata": {
+        "id": "E9S8YZofOh21"
+      },
+      "outputs": [],
+      "source": [
+        "BATCH_SIZE = 16\n",
+        "\n",
+        "train_iterator, valid_iterator, test_iterator = BucketIterator.splits(\n",
+        "    (train_data, valid_data, test_data),\n",
+        "     batch_size = BATCH_SIZE,\n",
+        "     sort_within_batch = True,\n",
+        "     sort_key = lambda x : len(x.src),\n",
+        "     device = device)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 12,
+      "metadata": {
+        "id": "wTt9YCS4Oh22"
+      },
+      "outputs": [],
+      "source": [
+        "class Encoder(nn.Module):\n",
+        "    def __init__(self, input_dim, emb_dim, enc_hid_dim, dec_hid_dim, dropout):\n",
+        "        super().__init__()\n",
+        "\n",
+        "        self.input_dim = input_dim\n",
+        "        self.emb_dim = emb_dim\n",
+        "        self.enc_hid_dim = enc_hid_dim\n",
+        "        self.dec_hid_dim = dec_hid_dim\n",
+        "        self.dropout = dropout\n",
+        "\n",
+        "        self.embedding = nn.Embedding(input_dim, emb_dim)\n",
+        "\n",
+        "        self.rnn = nn.GRU(emb_dim, enc_hid_dim, bidirectional = True)\n",
+        "\n",
+        "        self.fc = nn.Linear(enc_hid_dim * 2, dec_hid_dim)\n",
+        "\n",
+        "        self.dropout = nn.Dropout(dropout)\n",
+        "\n",
+        "    def forward(self, src, src_len):\n",
+        "\n",
+        "        #src = [src sent len, batch size]\n",
+        "        #src_len = [src sent len]\n",
+        "\n",
+        "        embedded = self.dropout(self.embedding(src))\n",
+        "\n",
+        "        #embedded = [src sent len, batch size, emb dim]\n",
+        "\n",
+        "        packed_embedded = nn.utils.rnn.pack_padded_sequence(embedded, src_len.cpu())\n",
+        "\n",
+        "        packed_outputs, hidden = self.rnn(packed_embedded)\n",
+        "\n",
+        "        #packed_outputs is a packed sequence containing all hidden states\n",
+        "        #hidden is now from the final non-padded element in the batch\n",
+        "\n",
+        "        outputs, _ = nn.utils.rnn.pad_packed_sequence(packed_outputs)\n",
+        "\n",
+        "        #outputs is now a non-packed sequence, all hidden states obtained\n",
+        "        #  when the input is a pad token are all zeros\n",
+        "\n",
+        "        #outputs = [sent len, batch size, hid dim * num directions]\n",
+        "        #hidden = [n layers * num directions, batch size, hid dim]\n",
+        "\n",
+        "        #hidden is stacked [forward_1, backward_1, forward_2, backward_2, ...]\n",
+        "        #outputs are always from the last layer\n",
+        "\n",
+        "        #hidden [-2, :, : ] is the last of the forwards RNN\n",
+        "        #hidden [-1, :, : ] is the last of the backwards RNN\n",
+        "\n",
+        "        #initial decoder hidden is final hidden state of the forwards and backwards\n",
+        "        #  encoder RNNs fed through a linear layer\n",
+        "        hidden = torch.tanh(self.fc(torch.cat((hidden[-2,:,:], hidden[-1,:,:]), dim = 1)))\n",
+        "\n",
+        "        #outputs = [sent len, batch size, enc hid dim * 2]\n",
+        "        #hidden = [batch size, dec hid dim]\n",
+        "\n",
+        "        return outputs, hidden"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 41,
+      "metadata": {
+        "id": "nDlKXvLzOh22"
+      },
+      "outputs": [],
+      "source": [
+        "class Attention(nn.Module):\n",
+        "    def __init__(self, enc_hid_dim, dec_hid_dim):\n",
+        "        super().__init__()\n",
+        "\n",
+        "        self.enc_hid_dim = enc_hid_dim\n",
+        "        self.dec_hid_dim = dec_hid_dim\n",
+        "\n",
+        "        self.attn = nn.Linear((enc_hid_dim * 2) + dec_hid_dim, dec_hid_dim)\n",
+        "        self.v = nn.Parameter(torch.rand(dec_hid_dim))\n",
+        "\n",
+        "    def forward(self, hidden, encoder_outputs, mask):\n",
+        "\n",
+        "        #hidden = [batch size, dec hid dim]\n",
+        "        #encoder_outputs = [src sent len, batch size, enc hid dim * 2]\n",
+        "        #mask = [batch size, src sent len]\n",
+        "\n",
+        "        batch_size = encoder_outputs.shape[1]\n",
+        "        src_len = encoder_outputs.shape[0]\n",
+        "\n",
+        "        #repeat encoder hidden state src_len times\n",
+        "        hidden = hidden.unsqueeze(1).repeat(1, src_len, 1)\n",
+        "\n",
+        "        encoder_outputs = encoder_outputs.permute(1, 0, 2)\n",
+        "\n",
+        "        #hidden = [batch size, src sent len, dec hid dim]\n",
+        "        #encoder_outputs = [batch size, src sent len, enc hid dim * 2]\n",
+        "\n",
+        "        energy = torch.tanh(self.attn(torch.cat((hidden, encoder_outputs), dim = 2)))\n",
+        "\n",
+        "        #energy = [batch size, src sent len, dec hid dim]\n",
+        "\n",
+        "        energy = energy.permute(0, 2, 1)\n",
+        "\n",
+        "        #energy = [batch size, dec hid dim, src sent len]\n",
+        "\n",
+        "        #v = [dec hid dim]\n",
+        "\n",
+        "        v = self.v.repeat(batch_size, 1).unsqueeze(1)\n",
+        "\n",
+        "        #v = [batch size, 1, dec hid dim]\n",
+        "\n",
+        "        attention = torch.bmm(v, energy).squeeze(1)\n",
+        "\n",
+        "        #attention = [batch size, src sent len]\n",
+        "\n",
+        "        attention = attention.masked_fill(mask == 0, -1e10)\n",
+        "\n",
+        "        return F.softmax(attention, dim = 1)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 22,
+      "metadata": {
+        "id": "rCl36YnGOh22"
+      },
+      "outputs": [],
+      "source": [
+        "class Decoder(nn.Module):\n",
+        "    def __init__(self, output_dim, emb_dim, enc_hid_dim, dec_hid_dim, dropout, attention):\n",
+        "        super().__init__()\n",
+        "\n",
+        "        self.emb_dim = emb_dim\n",
+        "        self.enc_hid_dim = enc_hid_dim\n",
+        "        self.dec_hid_dim = dec_hid_dim\n",
+        "        self.output_dim = output_dim\n",
+        "        self.dropout = dropout\n",
+        "        self.attention = attention\n",
+        "\n",
+        "        self.embedding = nn.Embedding(output_dim, emb_dim)\n",
+        "\n",
+        "        self.rnn = nn.GRU((enc_hid_dim * 2) + emb_dim, dec_hid_dim)\n",
+        "\n",
+        "        self.out = nn.Linear((enc_hid_dim * 2) + dec_hid_dim + emb_dim, output_dim)\n",
+        "\n",
+        "        self.dropout = nn.Dropout(dropout)\n",
+        "\n",
+        "    def forward(self, input, hidden, encoder_outputs, mask):\n",
+        "\n",
+        "        #input = [batch size]\n",
+        "        #hidden = [batch size, dec hid dim]\n",
+        "        #encoder_outputs = [src sent len, batch size, enc hid dim * 2]\n",
+        "        #mask = [batch size, src sent len]\n",
+        "\n",
+        "        input = input.unsqueeze(0)\n",
+        "\n",
+        "        #input = [1, batch size]\n",
+        "\n",
+        "        embedded = self.dropout(self.embedding(input))\n",
+        "\n",
+        "        #embedded = [1, batch size, emb dim]\n",
+        "\n",
+        "        a = self.attention(hidden, encoder_outputs, mask)\n",
+        "\n",
+        "        #a = [batch size, src sent len]\n",
+        "\n",
+        "        a = a.unsqueeze(1)\n",
+        "\n",
+        "        #a = [batch size, 1, src sent len]\n",
+        "\n",
+        "        encoder_outputs = encoder_outputs.permute(1, 0, 2)\n",
+        "\n",
+        "        #encoder_outputs = [batch size, src sent len, enc hid dim * 2]\n",
+        "\n",
+        "        weighted = torch.bmm(a, encoder_outputs)\n",
+        "\n",
+        "        #weighted = [batch size, 1, enc hid dim * 2]\n",
+        "\n",
+        "        weighted = weighted.permute(1, 0, 2)\n",
+        "\n",
+        "        #weighted = [1, batch size, enc hid dim * 2]\n",
+        "\n",
+        "        rnn_input = torch.cat((embedded, weighted), dim = 2)\n",
+        "\n",
+        "        #rnn_input = [1, batch size, (enc hid dim * 2) + emb dim]\n",
+        "\n",
+        "        output, hidden = self.rnn(rnn_input, hidden.unsqueeze(0))\n",
+        "\n",
+        "        #output = [sent len, batch size, dec hid dim * n directions]\n",
+        "        #hidden = [n layers * n directions, batch size, dec hid dim]\n",
+        "\n",
+        "        #sent len, n layers and n directions will always be 1 in this decoder, therefore:\n",
+        "        #output = [1, batch size, dec hid dim]\n",
+        "        #hidden = [1, batch size, dec hid dim]\n",
+        "        #this also means that output == hidden\n",
+        "        assert (output == hidden).all()\n",
+        "\n",
+        "        embedded = embedded.squeeze(0)\n",
+        "        output = output.squeeze(0)\n",
+        "        weighted = weighted.squeeze(0)\n",
+        "\n",
+        "        output = self.out(torch.cat((output, weighted, embedded), dim = 1))\n",
+        "\n",
+        "        #output = [bsz, output dim]\n",
+        "\n",
+        "        return output, hidden.squeeze(0), a.squeeze(1)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 23,
+      "metadata": {
+        "id": "T46urD7bOh22"
+      },
+      "outputs": [],
+      "source": [
+        "class Seq2Seq(nn.Module):\n",
+        "    def __init__(self, encoder, decoder, pad_idx, sos_idx, eos_idx, device):\n",
+        "        super().__init__()\n",
+        "\n",
+        "        self.encoder = encoder\n",
+        "        self.decoder = decoder\n",
+        "        self.pad_idx = pad_idx\n",
+        "        self.sos_idx = sos_idx\n",
+        "        self.eos_idx = eos_idx\n",
+        "        self.device = device\n",
+        "\n",
+        "    def create_mask(self, src):\n",
+        "        mask = (src != self.pad_idx).permute(1, 0)\n",
+        "        return mask\n",
+        "\n",
+        "    def forward(self, src, src_len, trg, teacher_forcing_ratio = 0.5):\n",
+        "\n",
+        "        #src = [src sent len, batch size]\n",
+        "        #src_len = [batch size]\n",
+        "        #trg = [trg sent len, batch size]\n",
+        "        #teacher_forcing_ratio is probability to use teacher forcing\n",
+        "        #e.g. if teacher_forcing_ratio is 0.75 we use teacher forcing 75% of the time\n",
+        "\n",
+        "        if trg is None:\n",
+        "            assert teacher_forcing_ratio == 0, \"Must be zero during inference\"\n",
+        "            inference = True\n",
+        "            trg = torch.zeros((100, src.shape[1])).long().fill_(self.sos_idx).to(src.device)\n",
+        "        else:\n",
+        "            inference = False\n",
+        "\n",
+        "        batch_size = src.shape[1]\n",
+        "        max_len = trg.shape[0]\n",
+        "        trg_vocab_size = self.decoder.output_dim\n",
+        "\n",
+        "        #tensor to store decoder outputs\n",
+        "        outputs = torch.zeros(max_len, batch_size, trg_vocab_size).to(self.device)\n",
+        "\n",
+        "        #tensor to store attention\n",
+        "        attentions = torch.zeros(max_len, batch_size, src.shape[0]).to(self.device)\n",
+        "\n",
+        "        #encoder_outputs is all hidden states of the input sequence, back and forwards\n",
+        "        #hidden is the final forward and backward hidden states, passed through a linear layer\n",
+        "        encoder_outputs, hidden = self.encoder(src, src_len)\n",
+        "\n",
+        "        #first input to the decoder is the <sos> tokens\n",
+        "        output = trg[0,:]\n",
+        "\n",
+        "        mask = self.create_mask(src)\n",
+        "\n",
+        "        #mask = [batch size, src sent len]\n",
+        "\n",
+        "        for t in range(1, max_len):\n",
+        "            output, hidden, attention = self.decoder(output, hidden, encoder_outputs, mask)\n",
+        "            outputs[t] = output\n",
+        "            attentions[t] = attention\n",
+        "            teacher_force = random.random() < teacher_forcing_ratio\n",
+        "            top1 = output.max(1)[1]\n",
+        "            output = (trg[t] if teacher_force else top1)\n",
+        "            if inference and output.item() == self.eos_idx:\n",
+        "                return outputs[:t], attentions[:t]\n",
+        "\n",
+        "        return outputs, attentions"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 24,
+      "metadata": {
+        "id": "wzn44aEMOh23"
+      },
+      "outputs": [],
+      "source": [
+        "INPUT_DIM = len(SRC.vocab)\n",
+        "OUTPUT_DIM = len(TRG.vocab)\n",
+        "ENC_EMB_DIM = 128\n",
+        "DEC_EMB_DIM = 128\n",
+        "ENC_HID_DIM = 100\n",
+        "DEC_HID_DIM = 100\n",
+        "ENC_DROPOUT = 0.8\n",
+        "DEC_DROPOUT = 0.8\n",
+        "PAD_IDX = SRC.vocab.stoi['<pad>']\n",
+        "SOS_IDX = TRG.vocab.stoi['<sos>']\n",
+        "EOS_IDX = TRG.vocab.stoi['<eos>']\n",
+        "\n",
+        "attn = Attention(ENC_HID_DIM, DEC_HID_DIM)\n",
+        "enc = Encoder(INPUT_DIM, ENC_EMB_DIM, ENC_HID_DIM, DEC_HID_DIM, ENC_DROPOUT)\n",
+        "dec = Decoder(OUTPUT_DIM, DEC_EMB_DIM, ENC_HID_DIM, DEC_HID_DIM, DEC_DROPOUT, attn)\n",
+        "\n",
+        "model = Seq2Seq(enc, dec, PAD_IDX, SOS_IDX, EOS_IDX, device).to(device)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 25,
+      "metadata": {
+        "id": "0FqWMN6EOh23",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "809d9f3f-e209-4a1c-851c-194071801309"
+      },
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "Seq2Seq(\n",
+              "  (encoder): Encoder(\n",
+              "    (embedding): Embedding(6355, 128)\n",
+              "    (rnn): GRU(128, 100, bidirectional=True)\n",
+              "    (fc): Linear(in_features=200, out_features=100, bias=True)\n",
+              "    (dropout): Dropout(p=0.8, inplace=False)\n",
+              "  )\n",
+              "  (decoder): Decoder(\n",
+              "    (attention): Attention(\n",
+              "      (attn): Linear(in_features=300, out_features=100, bias=True)\n",
+              "    )\n",
+              "    (embedding): Embedding(3702, 128)\n",
+              "    (rnn): GRU(328, 100)\n",
+              "    (out): Linear(in_features=428, out_features=3702, bias=True)\n",
+              "    (dropout): Dropout(p=0.8, inplace=False)\n",
+              "  )\n",
+              ")"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 25
+        }
+      ],
+      "source": [
+        "def init_weights(m):\n",
+        "    for name, param in m.named_parameters():\n",
+        "        if 'weight' in name:\n",
+        "            nn.init.normal_(param.data, mean=0, std=0.01)\n",
+        "        else:\n",
+        "            nn.init.constant_(param.data, 0)\n",
+        "\n",
+        "model.apply(init_weights)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 26,
+      "metadata": {
+        "id": "iJLYdoKSOh23",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "73647024-1eba-4a4d-f18c-960cd99c6f7b"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Модель содержит 3,192,754 параметров\n"
+          ]
+        }
+      ],
+      "source": [
+        "def count_parameters(model):\n",
+        "    return sum(p.numel() for p in model.parameters() if p.requires_grad)\n",
+        "\n",
+        "print(f'Модель содержит {count_parameters(model):,} параметров')"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "NJDbtDZYOh23"
+      },
+      "source": [
+        "Then we define our optimizer and criterion. We have already initialized `PAD_IDX` when initializing the model, so we don't need to do it again."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 94,
+      "metadata": {
+        "id": "2DP8mRXOOh23"
+      },
+      "outputs": [],
+      "source": [
+        "optimizer = optim.Adam(model.parameters())"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 95,
+      "metadata": {
+        "id": "LRFhmG54Oh23"
+      },
+      "outputs": [],
+      "source": [
+        "criterion = nn.CrossEntropyLoss(ignore_index = PAD_IDX)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 96,
+      "metadata": {
+        "id": "LIl9GX5wOh23"
+      },
+      "outputs": [],
+      "source": [
+        "def train(model, iterator, optimizer, criterion, clip):\n",
+        "\n",
+        "    model.train()\n",
+        "\n",
+        "    epoch_loss = 0\n",
+        "\n",
+        "    for i, batch in enumerate(iterator):\n",
+        "\n",
+        "        src, src_len = batch.src\n",
+        "        trg = batch.trg\n",
+        "\n",
+        "        optimizer.zero_grad()\n",
+        "\n",
+        "        output, attetion = model(src, src_len, trg, 0.4)\n",
+        "\n",
+        "        #trg = [trg sent len, batch size]\n",
+        "        #output = [trg sent len, batch size, output dim]\n",
+        "\n",
+        "        output = output[1:].view(-1, output.shape[-1])\n",
+        "        trg = trg[1:].view(-1)\n",
+        "\n",
+        "        #trg = [(trg sent len - 1) * batch size]\n",
+        "        #output = [(trg sent len - 1) * batch size, output dim]\n",
+        "\n",
+        "        loss = criterion(output, trg)\n",
+        "\n",
+        "        loss.backward()\n",
+        "\n",
+        "        torch.nn.utils.clip_grad_norm_(model.parameters(), clip)\n",
+        "\n",
+        "        optimizer.step()\n",
+        "\n",
+        "        epoch_loss += loss.item()\n",
+        "\n",
+        "    return epoch_loss / len(iterator)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "KL9puVUmKY4B"
+      },
+      "execution_count": 69,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 97,
+      "metadata": {
+        "id": "C6lMXHa6Oh24"
+      },
+      "outputs": [],
+      "source": [
+        "def evaluate(model, iterator, criterion):\n",
+        "\n",
+        "    model.eval()\n",
+        "\n",
+        "    epoch_loss = 0\n",
+        "\n",
+        "    with torch.no_grad():\n",
+        "\n",
+        "        for i, batch in enumerate(iterator):\n",
+        "\n",
+        "            src, src_len = batch.src\n",
+        "            trg = batch.trg\n",
+        "\n",
+        "            output, attention = model(src, src_len, trg, 0) #turn off teacher forcing\n",
+        "\n",
+        "            #trg = [trg sent len, batch size]\n",
+        "            #output = [trg sent len, batch size, output dim]\n",
+        "\n",
+        "            output = output[1:].view(-1, output.shape[-1])\n",
+        "            trg = trg[1:].view(-1)\n",
+        "\n",
+        "            #trg = [(trg sent len - 1) * batch size]\n",
+        "            #output = [(trg sent len - 1) * batch size, output dim]\n",
+        "\n",
+        "            loss = criterion(output, trg)\n",
+        "\n",
+        "            epoch_loss += loss.item()\n",
+        "\n",
+        "    return epoch_loss / len(iterator)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 84,
+      "metadata": {
+        "id": "Z8ZnTvZYOh24"
+      },
+      "outputs": [],
+      "source": [
+        "def epoch_time(start_time, end_time):\n",
+        "    elapsed_time = end_time - start_time\n",
+        "    elapsed_mins = int(elapsed_time / 60)\n",
+        "    elapsed_secs = int(elapsed_time - (elapsed_mins * 60))\n",
+        "    return elapsed_mins, elapsed_secs"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 98,
+      "metadata": {
+        "scrolled": true,
+        "id": "jqmCRLbGOh24",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "eda99878-7887-49ed-9fd2-391f7256f6b4"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Эпоха: 01 | Время: 49m 52s\n",
+            "Перплексия (обучение):  43.609\n",
+            "Перплексия (валидация):  62.780\n",
+            "Эпоха: 02 | Время: 49m 8s\n",
+            "Перплексия (обучение):  34.800\n",
+            "Перплексия (валидация):  63.562\n",
+            "Эпоха: 03 | Время: 50m 2s\n",
+            "Перплексия (обучение):  32.529\n",
+            "Перплексия (валидация):  68.056\n",
+            "Эпоха: 04 | Время: 49m 37s\n",
+            "Перплексия (обучение):  31.290\n",
+            "Перплексия (валидация):  76.408\n",
+            "Эпоха: 05 | Время: 49m 26s\n",
+            "Перплексия (обучение):  30.504\n",
+            "Перплексия (валидация):  67.065\n"
+          ]
+        }
+      ],
+      "source": [
+        "N_EPOCHS = 5\n",
+        "CLIP = 1\n",
+        "\n",
+        "best_valid_loss = float('inf')\n",
+        "\n",
+        "for epoch in range(N_EPOCHS):\n",
+        "\n",
+        "    start_time = time.time()\n",
+        "\n",
+        "    train_loss = train(model, train_iterator, optimizer, criterion, CLIP)\n",
+        "    valid_loss = evaluate(model, valid_iterator, criterion)\n",
+        "\n",
+        "    end_time = time.time()\n",
+        "\n",
+        "    epoch_mins, epoch_secs = epoch_time(start_time, end_time)\n",
+        "\n",
+        "    if valid_loss < best_valid_loss:\n",
+        "        best_valid_loss = valid_loss\n",
+        "        torch.save(model.state_dict(), 'conala_model_attention_test.pt')\n",
+        "\n",
+        "    print(f'Эпоха: {epoch+1:02} | Время: {epoch_mins}m {epoch_secs}s')\n",
+        "    print(f'Перплексия (обучение): {math.exp(train_loss):7.3f}')\n",
+        "    print(f'Перплексия (валидация): {math.exp(valid_loss):7.3f}')"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 99,
+      "metadata": {
+        "id": "9qqrnJqyOh24",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "408ffe38-bb45-4b41-d322-830a48a19bc7"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Перплексия (валидация):  63.593\n"
+          ]
+        }
+      ],
+      "source": [
+        "model.load_state_dict(torch.load('conala_model_attention_test.pt'))\n",
+        "\n",
+        "test_loss = evaluate(model, test_iterator, criterion)\n",
+        "\n",
+        "print(f'Перплексия (валидация): {math.exp(test_loss):7.3f}')"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "ymVXWMkYOh24"
+      },
+      "source": [
+        "## Предсказание кода по вопросу"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "-70XfFNrOh24"
+      },
+      "outputs": [],
+      "source": [
+        "def translate_sentence(model, sentence):\n",
+        "    model.eval()\n",
+        "    tokenized = tokenize_question(sentence)\n",
+        "    tokenized = ['<sos>'] + [t.lower() for t in tokenized] + ['<eos>']\n",
+        "    numericalized = [SRC.vocab.stoi[t] for t in tokenized]\n",
+        "    sentence_length = torch.LongTensor([len(numericalized)]).to(device)\n",
+        "    tensor = torch.LongTensor(numericalized).unsqueeze(1).to(device)\n",
+        "    translation_tensor_logits, attention = model(tensor, sentence_length, None, 0)\n",
+        "    translation_tensor = torch.argmax(translation_tensor_logits.squeeze(1), 1)\n",
+        "    translation = [TRG.vocab.itos[t] for t in translation_tensor]\n",
+        "    translation, attention = translation[1:], attention[1:]\n",
+        "    return translation, attention"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "M9hmXZ02Oh24"
+      },
+      "outputs": [],
+      "source": [
+        "def display_attention(candidate, translation, attention):\n",
+        "\n",
+        "    fig = plt.figure(figsize=(10,10))\n",
+        "    ax = fig.add_subplot(111)\n",
+        "\n",
+        "    attention = attention.squeeze(1).cpu().detach().numpy()\n",
+        "\n",
+        "    cax = ax.matshow(attention, cmap='bone')\n",
+        "\n",
+        "    ax.tick_params(labelsize=15)\n",
+        "    ax.set_xticklabels([''] + ['<sos>'] + [t.lower() for t in tokenize_question(candidate)] + ['<eos>'],\n",
+        "                       rotation=45)\n",
+        "    ax.set_yticklabels([''] + translation)\n",
+        "\n",
+        "    ax.xaxis.set_major_locator(ticker.MultipleLocator(1))\n",
+        "    ax.yaxis.set_major_locator(ticker.MultipleLocator(1))\n",
+        "\n",
+        "    plt.show()\n",
+        "    plt.close()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "kmw7LXsrOh24"
+      },
+      "outputs": [],
+      "source": [
+        "example_idx = 2\n",
+        "\n",
+        "src = ' '.join(vars(train_data.examples[example_idx])['src'])\n",
+        "trg = ' '.join(vars(train_data.examples[example_idx])['trg'])\n",
+        "\n",
+        "print(f'src = {src}')\n",
+        "print(f'trg = {trg}')"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "7hkSphB-Oh24"
+      },
+      "outputs": [],
+      "source": [
+        "translation, attention = translate_sentence(model, src)\n",
+        "\n",
+        "print('predicted trg = ', ' '.join(translation))\n",
+        "\n",
+        "display_attention(src, translation, attention)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "WsZycBxzOh25"
+      },
+      "outputs": [],
+      "source": [
+        "example_idx = 8\n",
+        "\n",
+        "src = ' '.join(vars(valid_data.examples[example_idx])['src'])\n",
+        "trg = ' '.join(vars(valid_data.examples[example_idx])['trg'])\n",
+        "\n",
+        "print(f'src = {src}')\n",
+        "print(f'trg = {trg}')"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "WCIpOzjSOh25"
+      },
+      "outputs": [],
+      "source": [
+        "translation, attention = translate_sentence(model, src)\n",
+        "\n",
+        "print('predicted trg = ', ' '.join(translation))\n",
+        "\n",
+        "display_attention(src, translation, attention)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "j4dljCfJOh25"
+      },
+      "outputs": [],
+      "source": [
+        "example_idx = 4\n",
+        "\n",
+        "src = ' '.join(vars(test_data.examples[example_idx])['src'])\n",
+        "trg = ' '.join(vars(test_data.examples[example_idx])['trg'])\n",
+        "\n",
+        "print(f'src = {src}')\n",
+        "print(f'trg = {trg}')"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "xamkWoPOOh25"
+      },
+      "outputs": [],
+      "source": [
+        "translation, attention = translate_sentence(model, src)\n",
+        "\n",
+        "print('predicted trg = ', ''.join(translation))\n",
+        "\n",
+        "display_attention(src, translation, attention)"
+      ]
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.6.8"
+    },
+    "colab": {
+      "provenance": [],
+      "gpuType": "T4"
+    },
+    "accelerator": "GPU"
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
